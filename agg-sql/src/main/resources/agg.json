@@ -1,0 +1,73 @@
+{
+    "jobName": "Flink SQL 聚合任务",
+    "sql": "select hostname, TUMBLE_START(rowtime, interval '1' MINUTE) as `@timestamp`, count(*) as cnt,avg(requesttime) as avg_latency from input GROUP BY TUMBLE(rowtime, interval '1' MINUTE),hostname",
+    "jobTable": {
+        "dimension": "hostname",
+        "tableSource": {
+            "name": "input",
+            "rowtime": {
+                "debugLog": false,
+                "enable": true,
+                "watermark": 1000,
+                "field": "@ts",
+                "tsTransfer": {
+                    "enable": true,
+                    "src": "@timestamp",
+                    "target": "@ts",
+                    "isJava8": true,
+                    "tsFormat": ""
+                },
+                "numberToLong": {
+                    "enable": false,
+                    "src": "unix_ts",
+                    "target": "@ts"
+                }
+            },
+            "proctime": {
+                "enable": false,
+                "field": "",
+                "tsTransfer": {
+                    "enable": false,
+                    "src": "",
+                    "target": "",
+                    "tsFormat": ""
+                }
+            },
+            "columns": {
+                "string": [
+                    "@timestamp",
+                    "hostname",
+                    "manager_ip",
+                    "service_ip",
+                    "hostname"
+                ],
+                "double": [
+                    "requesttime"
+                ],
+                "long": [
+                    "@ts"
+                ]
+            }
+        },
+        "tableSink": {
+            "name": "output",
+            "semantic": "none"
+        }
+    },
+    "jobSource": {
+        "bootstrap.servers": "127.0.0.1:9092",
+        "auto.offset.reset": "latest",
+        "group.id": "test-001-group",
+        "key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+        "value.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+        "topics": [
+            "test-001"
+        ]
+    },
+    "jobSink": {
+        "bootstrap.servers": "127.0.0.1:9092",
+        "transaction.timeout.ms": 3600000,
+        "retries": "3",
+        "topic": "test-002"
+    }
+}
