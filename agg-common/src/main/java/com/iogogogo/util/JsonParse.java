@@ -133,10 +133,6 @@ public class JsonParse {
     }
 
     /**
-     * https://gist.github.com/xingstarx/5ddc14ff6ca68ba4097815c90d1c47cc
-     * <p>
-     * https://stackoverflow.com/questions/36508323/how-can-i-prevent-gson-from-converting-integers-to-doubles/36529534#36529534
-     * <p>
      * Created by tao.zeng on 2020/6/4.
      * <p>
      * 处理LocalDateTime序列化与反序列化
@@ -157,6 +153,11 @@ public class JsonParse {
 
     /**
      * Created by tao.zeng on 2020/6/4.
+     * <p>
+     * https://gist.github.com/xingstarx/5ddc14ff6ca68ba4097815c90d1c47cc
+     * <p>
+     * https://stackoverflow.com/questions/36508323/how-can-i-prevent-gson-from-converting-integers-to-doubles/36529534#36529534
+     * <p>
      * <p>
      * 解决json数据转换为map结构的时候，会出现int变成double的问题
      */
