@@ -1,16 +1,15 @@
 package com.iogogogo;
 
-import com.iogogogo.util.Java8DateTimeUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.iogogogo.util.JsonParse;
-import com.iogogogo.util.TypeMapUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by tao.zeng on 2020/6/4.
@@ -21,17 +20,43 @@ public class JsonTests {
 
     @Test
     public void test() {
-        String json = "{ \"hostname\": \"NODE-01\", \"manager_ip\": \"139.0.0.15\", \"service_ip\": \"182.241.15.101\", \"requesttime\": 20.5, \"unix_ts\": 1591239967135, \"@timestamp\": \"2020-06-04 11:37:59\" }";
+        LocalDateTime dateTime = LocalDateTime.now();
+        LocalDate date = LocalDate.now();
 
+        Gson gson = new Gson();
 
-        Map<String, Object> map = JsonParse.parse(json, JsonParse.MAP_STR_OBJ_TYPE);
+        String json = gson.toJson(dateTime);
 
-        Map<String, List<TypeMapUtils.TypeMap>> typeMap = TypeMapUtils.getTypeMap(map);
+        log.info("dateTime Serialization:{}", json);
+        log.info("dateTime Deserialization:{}", gson.fromJson(json, LocalDateTime.class));
 
-        System.out.println(map);
-        System.out.println(typeMap);
+        System.out.println();
 
-        System.out.println(JsonParse.toJson(new X(Java8DateTimeUtils.nowDateTime())));
+        json = gson.toJson(date);
+        log.info("date Serialization:{}", json);
+        log.info("date Deserialization:{}", gson.fromJson(json, LocalDate.class));
+    }
+
+    @Test
+    public void test1() {
+        LocalDateTime dateTime = LocalDateTime.now();
+        LocalDate date = LocalDate.now();
+
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class, new JsonParse.LocalDateAdapter())
+                .registerTypeAdapter(LocalDateTime.class, new JsonParse.LocalDateTimeAdapter())
+                .create();
+
+        String json = gson.toJson(dateTime);
+
+        log.info("dateTime Serialization:{}", json);
+        log.info("dateTime Deserialization:{}", gson.fromJson(json, LocalDateTime.class));
+
+        System.out.println();
+
+        json = gson.toJson(date);
+        log.info("date Serialization:{}", json);
+        log.info("date Deserialization:{}", gson.fromJson(json, LocalDate.class));
     }
 
 

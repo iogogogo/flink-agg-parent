@@ -51,7 +51,7 @@ public class MapSchema implements DeserializationSchema<Map<String, Object>>, Se
             if (debug) log.info("tsTransfer srcValue:{} targetKey:{} format:{}", srcValue, targetKey, tsFormat);
 
             if (StringUtils.isNotEmpty(srcValue)) {
-                LocalDateTime dateTime = Java8DateTimeUtils.parseJava8(srcValue, tsFormat);
+                LocalDateTime dateTime = Java8DateTimeUtils.parse(srcValue, tsTransfer.isJava8(), tsFormat);
                 long epochMilli = Java8DateTimeUtils.toEpochMilli(dateTime);
 
                 if (debug) log.info("tsTransfer dateTime:{} epochMilli:{}", dateTime, epochMilli);

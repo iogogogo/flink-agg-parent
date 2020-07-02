@@ -103,8 +103,6 @@ public class JobDefinition implements Serializable {
 
             private boolean enable;
 
-            private boolean isJava8;
-
             private JobDefTsTransfer tsTransfer;
 
             private JobDefNumberToLong numberToLong;
@@ -140,6 +138,8 @@ public class JobDefinition implements Serializable {
             private String target;
 
             private String tsFormat;
+
+            private boolean isJava8;
         }
 
         /**

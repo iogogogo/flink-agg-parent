@@ -134,7 +134,7 @@ public class AggSql {
                 resultMap.put("out_topic", outTopic);
 
                 byte[] bytes = JsonParse.toJsonBytes(resultMap);
-                return new ProducerRecord<>(outTopic, bytes);
+                return new ProducerRecord<>(outTopic, null, null, bytes);
             }
         }, props, getSemantic(semantic));
 

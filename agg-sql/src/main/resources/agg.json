@@ -55,7 +55,7 @@
         }
     },
     "jobSource": {
-        "bootstrap.servers": "127.0.0.1:9092",
+        "bootstrap.servers": "192.168.21.122:9092",
         "auto.offset.reset": "latest",
         "group.id": "test-001-group",
         "key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
@@ -65,9 +65,10 @@
         ]
     },
     "jobSink": {
-        "bootstrap.servers": "127.0.0.1:9092",
-        "transaction.timeout.ms": 3600000,
+        "bootstrap.servers": "192.168.21.122:9092",
         "retries": "3",
-        "topic": "test-002"
-    }
+        "topic": "test-002",
+        "partitionType": ""
+    },
+    "partitionType": "ROUND_ROBIN"
 }
