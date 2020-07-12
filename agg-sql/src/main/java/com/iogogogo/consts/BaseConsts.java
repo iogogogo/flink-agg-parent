@@ -5,7 +5,7 @@ package com.iogogogo.consts;
  */
 public interface BaseConsts {
 
-    String JOB_DEFINITION_KEY = "job.definition";
+    String JOB_DEFINITION_KEY = "job.conf";
 
     String TOPICS = "topics", TOPIC = "topic";
 

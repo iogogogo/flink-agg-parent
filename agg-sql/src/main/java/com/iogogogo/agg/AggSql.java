@@ -2,6 +2,7 @@ package com.iogogogo.agg;
 
 import com.google.common.collect.Lists;
 import com.iogogogo.context.FlinkEnvironment;
+import com.iogogogo.context.FlinkKafkaPartitionType;
 import com.iogogogo.definition.JobDefinition;
 import com.iogogogo.schema.MapSchema;
 import com.iogogogo.table.MapStreamTableSource;
@@ -12,6 +13,7 @@ import com.iogogogo.util.JobDefUtils;
 import com.iogogogo.util.JsonParse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -86,6 +88,7 @@ public class AggSql {
         final String outTopic = jobSink.getOrDefault(TOPIC, "").toString();
         final String sql = jobDefinition.getSql();
         final String tableName = jobTableSource.getName();
+        final String partitionType = jobDefinition.getPartitionType();
 
         log.info("semantic:{}", semantic);
 
@@ -117,25 +120,27 @@ public class AggSql {
         final String[] fieldNames = table.getSchema().getFieldNames();
 
 
-        FlinkKafkaProducer<Row> kafkaProducer = new FlinkKafkaProducer<>(outTopic, new KafkaSerializationSchema<Row>() {
+        FlinkKafkaProducer<Row> kafkaProducer = new FlinkKafkaProducer<>(outTopic, (KafkaSerializationSchema<Row>) (element, timestamp) -> {
 
-            @Override
-            public ProducerRecord<byte[], byte[]> serialize(Row element, @Nullable Long timestamp) {
+            Map<String, Object> resultMap = new HashMap<>();
 
-                Map<String, Object> resultMap = new HashMap<>();
-
-                for (int i = 0; i < fieldNames.length; i++) {
-                    resultMap.put(fieldNames[i], element.getField(i));
-                }
-
-                resultMap.put("unix_ts", Java8DateTimeUtils.toEpochMilli());
-                resultMap.put("dimension", dimension);
-                resultMap.put("in_topic", inTopicList);
-                resultMap.put("out_topic", outTopic);
-
-                byte[] bytes = JsonParse.toJsonBytes(resultMap);
-                return new ProducerRecord<>(outTopic, null, null, bytes);
+            for (int i = 0; i < fieldNames.length; i++) {
+                resultMap.put(fieldNames[i], element.getField(i));
             }
+
+            resultMap.put("unix_ts", Java8DateTimeUtils.toEpochMilli());
+            resultMap.put("dimension", dimension);
+            resultMap.put("in_topic", inTopicList);
+            resultMap.put("out_topic", outTopic);
+
+            byte[] bytes = JsonParse.toJsonBytes(resultMap);
+
+            if (StringUtils.equalsAnyIgnoreCase(partitionType, FlinkKafkaPartitionType.ROUND_ROBIN.name())) {
+                return new ProducerRecord<>(outTopic, null, null, bytes);
+            } else {
+                return new ProducerRecord<>(outTopic, bytes);
+            }
+
         }, props, getSemantic(semantic));
 
         dataStream.addSink(kafkaProducer).uid(IdHelper.id()).name("Serialization Messages");

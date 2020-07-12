@@ -19,7 +19,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static com.iogogogo.consts.BaseConsts.TOPICS;
 
@@ -70,12 +69,11 @@ public class Tests {
                 data.setTimestamp(Java8DateTimeUtils.nowDateTime());
 
                 String message = JsonParse.toJson(data);
-                log.info("writer message:{}", message);
-                kafkaProducer.send(new ProducerRecord<>(topic, message));
+                kafkaProducer.send(new ProducerRecord<>(topic, message), (mate, e) -> {
+                    log.info("offset:{} message:{}", mate.offset(), message);
+                });
                 kafkaProducer.flush();
             });
-
-            TimeUnit.SECONDS.sleep(3);
         }
     }
 

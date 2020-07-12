@@ -1,5 +1,6 @@
 package com.iogogogo;
 
+import com.iogogogo.context.FlinkKafkaPartitionType;
 import com.iogogogo.util.Java8DateTimeUtils;
 import org.junit.Test;
 
@@ -27,5 +28,10 @@ public class DateTimeTests {
 
         System.out.println(Java8DateTimeUtils.parse(str, pattern));
         System.out.println(Java8DateTimeUtils.parseJava8(str, pattern));
+    }
+
+    @Test
+    public void test1() {
+        System.out.println(FlinkKafkaPartitionType.ROUND_ROBIN.name());
     }
 }

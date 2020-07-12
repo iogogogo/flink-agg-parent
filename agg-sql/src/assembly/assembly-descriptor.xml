@@ -20,7 +20,7 @@
             <directory>target</directory>
             <outputDirectory>agg-sql</outputDirectory>
             <includes>
-                <include>*.jar</include>
+                <include>agg-sql-*.jar</include>
             </includes>
         </fileSet>
     </fileSets>

@@ -23,7 +23,7 @@ import java.util.Objects;
 @Slf4j
 public class MapSchema implements DeserializationSchema<Map<String, Object>>, SerializationSchema<Map<String, Object>> {
 
-    private JobDefinition jobDefinition;
+    private final JobDefinition jobDefinition;
 
     public MapSchema(JobDefinition jobDefinition) {
         this.jobDefinition = jobDefinition;

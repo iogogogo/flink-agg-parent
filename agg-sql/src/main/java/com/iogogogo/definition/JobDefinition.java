@@ -44,6 +44,11 @@ public class JobDefinition implements Serializable {
     private Map<String, Object> jobSink;
 
     /**
+     * partitionType
+     */
+    private String partitionType;
+
+    /**
      * Created by tao.zeng on 2020/6/3.
      * <p>
      * table 定义
