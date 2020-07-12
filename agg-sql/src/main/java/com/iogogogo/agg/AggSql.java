@@ -29,10 +29,7 @@ import org.apache.flink.types.Row;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static com.iogogogo.consts.BaseConsts.TOPIC;
 import static com.iogogogo.consts.BaseConsts.TOPICS;
@@ -43,38 +40,45 @@ import static com.iogogogo.consts.BaseConsts.TOPICS;
 @Slf4j
 public class AggSql {
 
-    public void agg(String[] args) throws Exception {
-        ParameterTool parameterTool = ParameterTool.fromArgs(args);
+    public void agg(String[] args) {
+        try {
+            ParameterTool parameterTool = ParameterTool.fromArgs(args);
 
-        JobDefinition jobDefinition = JobDefUtils.getJobDefinition(parameterTool);
+            JobDefinition jobDefinition = JobDefUtils.getJobDefinition(parameterTool);
 
-        log.info("jobDefinition:{}", jobDefinition);
+            log.info("jobDefinition:{}", jobDefinition);
 
-        Tuple2<StreamExecutionEnvironment, StreamTableEnvironment> context = FlinkEnvironment.context();
+            if (Objects.isNull(jobDefinition)) {
+                return;
+            }
 
-        StreamExecutionEnvironment env = context.f0;
-        StreamTableEnvironment tableEnv = context.f1;
+            Tuple2<StreamExecutionEnvironment, StreamTableEnvironment> context = FlinkEnvironment.context();
 
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+            StreamExecutionEnvironment env = context.f0;
+            StreamTableEnvironment tableEnv = context.f1;
 
-        final Map<String, Object> jobDefinitionJobSource = jobDefinition.getJobSource();
+            env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
-        Properties props = MapUtils.toProperties(jobDefinitionJobSource);
+            final Map<String, Object> jobDefinitionJobSource = jobDefinition.getJobSource();
 
-        @SuppressWarnings("unchecked")
-        List<String> inTopicList = (List<String>) jobDefinitionJobSource.getOrDefault(TOPICS, Lists.newArrayList());
+            Properties props = MapUtils.toProperties(jobDefinitionJobSource);
 
-        DataStream<Map<String, Object>> sourceDataStream = env
-                .addSource(new FlinkKafkaConsumer<>(inTopicList, new MapSchema(jobDefinition), props))
-                .uid(IdHelper.id())
-                .name("Deserialization Messages");
+            @SuppressWarnings("unchecked")
+            List<String> inTopicList = (List<String>) jobDefinitionJobSource.getOrDefault(TOPICS, Lists.newArrayList());
 
-        sourceDataStream.print();
+            DataStream<Map<String, Object>> sourceDataStream = env
+                    .addSource(new FlinkKafkaConsumer<>(inTopicList, new MapSchema(jobDefinition), props))
+                    .uid(IdHelper.id())
+                    .name("Deserialization Messages");
 
-        toTable(tableEnv, sourceDataStream, jobDefinition, inTopicList);
+            sourceDataStream.print();
 
+            toTable(tableEnv, sourceDataStream, jobDefinition, inTopicList);
 
-        env.execute(jobDefinition.getJobName());
+            env.execute(jobDefinition.getJobName());
+        } catch (Exception e) {
+            log.error("job running failure.", e);
+        }
     }
 
     private void toTable(StreamTableEnvironment tableEnv, DataStream<Map<String, Object>> sourceDataStream, JobDefinition jobDefinition, List<String> inTopicList) {
@@ -120,27 +124,28 @@ public class AggSql {
         final String[] fieldNames = table.getSchema().getFieldNames();
 
 
-        FlinkKafkaProducer<Row> kafkaProducer = new FlinkKafkaProducer<>(outTopic, (KafkaSerializationSchema<Row>) (element, timestamp) -> {
+        FlinkKafkaProducer<Row> kafkaProducer = new FlinkKafkaProducer<>(outTopic, new KafkaSerializationSchema<Row>() {
+            @Override
+            public ProducerRecord<byte[], byte[]> serialize(Row element, @Nullable Long timestamp) {
+                Map<String, Object> resultMap = new HashMap<>();
 
-            Map<String, Object> resultMap = new HashMap<>();
+                for (int i = 0; i < fieldNames.length; i++) {
+                    resultMap.put(fieldNames[i], element.getField(i));
+                }
 
-            for (int i = 0; i < fieldNames.length; i++) {
-                resultMap.put(fieldNames[i], element.getField(i));
+                resultMap.put("unix_ts", Java8DateTimeUtils.toEpochMilli());
+                resultMap.put("dimension", dimension);
+                resultMap.put("in_topic", inTopicList);
+                resultMap.put("out_topic", outTopic);
+
+                byte[] bytes = JsonParse.toJsonBytes(resultMap);
+
+                if (StringUtils.equalsAnyIgnoreCase(partitionType, FlinkKafkaPartitionType.ROUND_ROBIN.name())) {
+                    return new ProducerRecord<>(outTopic, null, null, bytes);
+                } else {
+                    return new ProducerRecord<>(outTopic, bytes);
+                }
             }
-
-            resultMap.put("unix_ts", Java8DateTimeUtils.toEpochMilli());
-            resultMap.put("dimension", dimension);
-            resultMap.put("in_topic", inTopicList);
-            resultMap.put("out_topic", outTopic);
-
-            byte[] bytes = JsonParse.toJsonBytes(resultMap);
-
-            if (StringUtils.equalsAnyIgnoreCase(partitionType, FlinkKafkaPartitionType.ROUND_ROBIN.name())) {
-                return new ProducerRecord<>(outTopic, null, null, bytes);
-            } else {
-                return new ProducerRecord<>(outTopic, bytes);
-            }
-
         }, props, getSemantic(semantic));
 
         dataStream.addSink(kafkaProducer).uid(IdHelper.id()).name("Serialization Messages");

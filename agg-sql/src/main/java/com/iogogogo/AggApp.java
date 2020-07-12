@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AggApp {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new AggSql().agg(args);
     }
 }

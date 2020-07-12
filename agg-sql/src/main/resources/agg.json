@@ -58,8 +58,8 @@
         "bootstrap.servers": "127.0.0.1:9092",
         "auto.offset.reset": "latest",
         "group.id": "agg-group-001",
-        "key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
-        "value.serializer": "org.apache.kafka.common.serialization.StringSerializer",
+        "key.deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
+        "value.deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
         "topics": [
             "agg-source"
         ]

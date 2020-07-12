@@ -53,6 +53,8 @@ public class Tests {
 
         @SuppressWarnings("unchecked") final List<String> topicList = (List<String>) jobDefinitionJobSource.getOrDefault(TOPICS, Lists.newArrayList());
         final String topic = topicList.get(0);
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
         KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(props);
 

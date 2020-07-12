@@ -22,25 +22,30 @@ import static com.iogogogo.consts.BaseConsts.JOB_DEFINITION_KEY;
 @Slf4j
 public class JobDefUtils {
 
-    public static JobDefinition getJobDefinition(ParameterTool parameterTool) throws IOException {
-        URL url = AggApp.class.getClassLoader().getResource("agg.json");
-        String confJson = null;
-        if (Objects.nonNull(parameterTool) && parameterTool.has(JOB_DEFINITION_KEY)) {
-            String jobConfFile = parameterTool.get(JOB_DEFINITION_KEY);
-            confJson = new String(Files.readAllBytes(Paths.get(jobConfFile)), StandardCharsets.UTF_8);
-        } else if (Objects.nonNull(url)) {
-            try {
-                confJson = new String(Files.readAllBytes(Paths.get(url.getPath())), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                e.printStackTrace();
+    public static JobDefinition getJobDefinition(ParameterTool parameterTool) {
+        try {
+            URL url = AggApp.class.getClassLoader().getResource("agg.json");
+            String confJson = null;
+            if (Objects.nonNull(parameterTool) && parameterTool.has(JOB_DEFINITION_KEY)) {
+                String jobConfFile = parameterTool.get(JOB_DEFINITION_KEY);
+                confJson = new String(Files.readAllBytes(Paths.get(jobConfFile)), StandardCharsets.UTF_8);
+            } else if (Objects.nonNull(url)) {
+                try {
+                    confJson = new String(Files.readAllBytes(Paths.get(url.getPath())), StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                log.warn("JobDefinition NOT FOUND");
             }
-        } else {
-            log.warn("JobDefinition NOT FOUND");
-        }
 
-        if (StringUtils.isEmpty(confJson)) {
-            throw new BizException("JobDefinition NOT FOUND");
+            if (StringUtils.isEmpty(confJson)) {
+                throw new BizException("JobDefinition NOT FOUND");
+            }
+            return JsonParse.parse(confJson, JobDefinition.class);
+        } catch (IOException e) {
+            log.error("JobDefinition parse failure.", e);
         }
-        return JsonParse.parse(confJson, JobDefinition.class);
+        return null;
     }
 }
